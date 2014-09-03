@@ -9,6 +9,7 @@
 	. Clean the code up, there are variables and hard-coded stuff eveywhere!
 	. Create example with two images
 	. Make the animation configurable (radius, angleIncrement)
+	. Make other aspects of the scene configurable, eg: clipping percentage
 
 */
 
@@ -229,6 +230,8 @@ function init() {
 
 	var theImage;
 	//	Clip at pct around the image
+	//	TODO: Should be using the container to clip - 
+	//		need to size the image for the container first...
 	function enableClipping(){
 		var pct = 0.12,
 			pRatio = window.innerHeight / theImage.height,
@@ -310,9 +313,10 @@ function init() {
 
 			imgSrc.onload = function() {
 
-				var s = 6;
-				var w = Math.round( img.width / s ),
-					h = Math.round( img.height / s );
+				var s = 6,
+					w = Math.round( img.width / s ),
+					h = Math.round( img.height / s ),
+					size = w * h;
 
 				var canvas = document.createElement( 'canvas' ),
 					ctx = canvas.getContext( '2d' );
@@ -339,16 +343,14 @@ function init() {
 					near = parseFloat( d.depth.near );
 
 				var geometry = new THREE.BufferGeometry();
-				var size = w * h;
 
-				// geometry.addAttribute( 'position', Float32Array, size, 3 );
-				// geometry.addAttribute( 'customColor', Float32Array, size, 3 );
 				geometry.addAttribute( 'position', new Float32Array(3) );
 				geometry.addAttribute( 'customColor', new Float32Array(3) );
 			
 				var positions = geometry.attributes.position.array;
 				var customColors = geometry.attributes.customColor.array;
 
+				//	What does this do?
 				adjustment = 10 * 960 / img.width;
 				var ar = img.height / img.width;
 				var scale = new THREE.Vector3( 1, 1, 1 );
@@ -433,19 +435,6 @@ function init() {
 				camera.far = ( far + ( maxZ - minZ ) ) * adjustment;
 				camera.updateProjectionMatrix();
 
-
-				// //	Try scissors?
-				// var pct = 0.12,
-				// 	pRatio = window.innerHeight / img.height,
-				// 	pIWidth = img.width * pRatio,
-				// 	pIHeight = img.height * pRatio,
-				// 	pX = window.innerWidth / 2 - (pIWidth/2) + (pIWidth * pct),
-				// 	pY = pIHeight * (pct),
-				// 	pWidth = pIWidth - 2 * (pIWidth * pct),
-				// 	pHeight = pIHeight - 2 * (pIHeight * pct);
-
-				// renderer.setScissor( pX, pY, pWidth, pHeight );
-				// renderer.enableScissorTest( true );
 				theImage = img;
 				enableClipping();
 
