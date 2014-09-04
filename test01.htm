@@ -9,21 +9,23 @@
 		<script src="js/three.68.min.js" ></script>
 		<script src="js/ShaderLoader.js" ></script>
 		<script src="js/StackBlur.js" ></script>
-
+		<style>
+			#container { width: 100%; height: 400px; }
+		</style>
 	</head>
 	<body>
 
 	<div id="container" ></div>
 
-	<div id="loading">
-		<p>Loading...</p>
-	</div>
-	<div id="message">
-		<p></p>
-		<a href="#" class="close inside">Close</a>
-	</div>
+	<script src="depthview.js"></script>
 
-<script src="depthviewer.js"></script>
+	<script>
+		//	'assets/window.jpg', 'assets/alleyway.jpg', 'assets/greek-helmet.jpg', 'assets/jules.jpg';
+		window.addEventListener( 'load', function(){
+			depthView(document.getElementById( 'container' ), 'assets/alleyway.jpg');
+		} );
+
+	</script>
 		
 	</body>
 </html>

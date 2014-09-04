@@ -4,7 +4,7 @@
 	This is a giant mess, but works for the given example
 
 	. Make it work with landscape photos, eg: greek helmet
-	. Make a function that takes image source and a container element
+	[done] . Make a function that takes image source and a container element
 	. Make the size calculations based on the container, not the window
 	. Clean the code up, there are variables and hard-coded stuff eveywhere!
 	. Create example with two images
@@ -15,41 +15,22 @@
 
 'use strict';
 
-var settings = {
-	smoothRadius: 10,
-	quadSize: 4,
-	pointSize: 3,
-	animate: true
-};
+function depthView(container, src) {
 
-function showLoading( show ) {
-	if( show ) loading.style.opacity = 1;
-	else loading.style.opacity = 0;
-}
+	var settings = {
+		smoothRadius: 15,	//	Do smoothing on the depth, default is 10, quite CPU intensive
+		quadSize: 4,
+		pointSize: 3,
+		animate: true
+	};
 
-function showMessage( msg ) {
-	message.querySelector( 'p' ).innerHTML = msg;
-	message.style.opacity = 1;
-}
-
-var container = document.getElementById( 'container' );
-var loading = document.getElementById( 'loading' );
-var message = document.getElementById( 'message' );
-message.querySelector( 'a' ).addEventListener( 'click', function( e ) {
-	message.style.opacity = 0;
-} );
-
-var d = new DepthReader();
-
-var imgSrc = new Image();
-
-window.addEventListener( 'load', init );
-
-function init() {
+	var d = new DepthReader();
+	var imgSrc = new Image();
 
 	//	1: 'solid', 2: 'point', 3: 'wireframe'
 	var renderMode = 1;
 	var material, meshSolid, meshPoint;
+	//	Note: setting fov controls the animation in startup
 	var renderer, scene, camera, fov = 70, nFov = fov, distance = 500, nDistance = distance;
 	var displacement = 0, nDisplacement = displacement;
 
@@ -60,14 +41,24 @@ function init() {
 
 	scene = new THREE.Scene();
 
-	camera = new THREE.PerspectiveCamera( fov, window.innerWidth / window.innerHeight, .1, 1000 );
+	var cWidth, cHeight;
+
+	function setDimensions() {
+		cWidth = container.clientWidth;
+		cHeight = container.clientHeight;
+	};
+
+	setDimensions();
+
+
+	camera = new THREE.PerspectiveCamera( fov, cWidth / cHeight, .1, 1000 );
 	camera.target = new THREE.Vector3( 0, 0, 0 );
 	camera.position.y = 500;
 	scene.add( camera );
 
 	renderer = new THREE.WebGLRenderer( { antialias: true, alpha: false } );
 	renderer.setClearColor( 0, 0 );
-	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.setSize( cWidth, cHeight );
 	renderer.sortObjects = true;
 
 	container.appendChild( renderer.domElement );
@@ -89,6 +80,8 @@ function init() {
 	function onResize() {
 		var w = container.clientWidth,
 			h = container.clientHeight;
+
+		setDimensions();
 
 		renderer.setSize( w, h );
 		if(theImage) {
@@ -233,11 +226,11 @@ function init() {
 	//	TODO: Should be using the container to clip - 
 	//		need to size the image for the container first...
 	function enableClipping(){
-		var pct = 0.12,
-			pRatio = window.innerHeight / theImage.height,
+		var pct = 0.00,
+			pRatio = cHeight / theImage.height,
 			pIWidth = theImage.width * pRatio,
 			pIHeight = theImage.height * pRatio,
-			pX = window.innerWidth / 2 - (pIWidth/2) + (pIWidth * pct),
+			pX = cWidth / 2 - (pIWidth/2) + (pIWidth * pct),
 			pY = pIHeight * (pct),
 			pWidth = pIWidth - 2 * (pIWidth * pct),
 			pHeight = pIHeight - 2 * (pIHeight * pct);
@@ -246,7 +239,9 @@ function init() {
 		renderer.enableScissorTest( true );
 	};
 
-	//	For animation - big radius = big circle, angleIncrement is how much to add per animationFrame
+	//	For animation - big radius = big circle, angleIncrement 
+	//	is how much to add per animationFrame - assuming 60fps, you can 
+	//	calculate the amount of time to do 360 degrees (1 = 5 secs)
 	var radius = 0.75, angle = 0, angleIncrement = 1.5;
 
 	function render() {
@@ -288,6 +283,7 @@ function init() {
 
 		renderer.render( scene, camera );
 
+		//	MvB: animation in a circle!
 		if(settings.animate && ! isUserInteracting) {
 		    /// calc x and y position with radius at given angle
 		    var x = radius * Math.cos(angle * Math.PI / 180);
@@ -350,8 +346,10 @@ function init() {
 				var positions = geometry.attributes.position.array;
 				var customColors = geometry.attributes.customColor.array;
 
-				//	What does this do?
-				adjustment = 10 * 960 / img.width;
+				//	What does this do? 
+				//	10 x 3 x 360 perhaps?
+				//adjustment = 10 * 960 / img.width;
+				adjustment = 10 * 500 / img.width;
 				var ar = img.height / img.width;
 				var scale = new THREE.Vector3( 1, 1, 1 );
 				var v = new THREE.Vector3();
@@ -440,9 +438,6 @@ function init() {
 
 				nLat = 0;
 				nLon = 90;
-
-				showLoading( false );
-
 			}
 
 			imgSrc.src = 'data:' + d.image.mime + ';base64,' + d.image.data;
@@ -454,8 +449,7 @@ function init() {
 	}
 
 	function onError( msg ) {
-		showLoading( false );
-		showMessage( msg );
+		console.log("Depthviewer: " + msg);
 	}
 
 
@@ -476,11 +470,6 @@ function init() {
 			fragmentShader: this.get( 'particle-fs' )
 		} );
 
-		showLoading( true );
-		//var src = 'assets/window.jpg';
-		var src = 'assets/alleyway.jpg';
-		//var src= 'assets/greek-helmet.jpg'
-		//var src = 'assets/jules.jpg';
 		d.loadFile( src, setImg, onError );
 
 	} );
